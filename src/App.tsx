@@ -463,7 +463,7 @@ function Storefront() {
   };
 
   const products = [...sarees];
-  const processedProducts = products
+  const filteredProducts = products
     .map(product => {
       const productReviews = reviews.filter(r => r.product_id === product.id.toString());
       const reviewCount = productReviews.length;
@@ -502,25 +502,30 @@ function Storefront() {
              descriptionStr.includes(target) ||
              nameStr.includes(target);
     })
-    // C. Implement the Correct Mathematical Sorting Blocks
-    .sort((a, b) => {
-      if (sortBy === 'low-high') {
-        return parsePrice(a) - parsePrice(b);
-      }
-      if (sortBy === 'high-low') {
-        return parsePrice(b) - parsePrice(a);
-      }
-      if (sortBy === 'newest') {
-        const dateA = new Date(a.createdAt || a.id || 0);
-        const dateB = new Date(b.createdAt || b.id || 0);
-        // @ts-ignore
-        return dateB - dateA;
-      }
-      if (sortBy === 'rating') {
-        return Number(b.rating || 0) - Number(a.rating || 0);
-      }
-      return 0;
+    // C. Filter by minimum rating
+    .filter(product => {
+      if (minRating === 0) return true;
+      return (product.rating || 0) >= minRating;
     });
+
+  const processedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'low-high') {
+      return parsePrice(a) - parsePrice(b);
+    }
+    if (sortBy === 'high-low') {
+      return parsePrice(b) - parsePrice(a);
+    }
+    if (sortBy === 'newest') {
+      const dateA = new Date(a.createdAt || a.id || 0);
+      const dateB = new Date(b.createdAt || b.id || 0);
+      // @ts-ignore
+      return dateB - dateA;
+    }
+    if (sortBy === 'rating') {
+      return Number(b.rating || 0) - Number(a.rating || 0);
+    }
+    return 0;
+  });
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FDFDFB] text-stone-800">
