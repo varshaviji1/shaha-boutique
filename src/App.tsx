@@ -18,6 +18,7 @@ export interface ExtendedSaree extends Saree {
   rate?: string | number;
   title?: string;
   _id?: string;
+  rating?: number;
 }
 
 export interface CartItem {
@@ -463,6 +464,17 @@ function Storefront() {
 
   const products = [...sarees];
   const processedProducts = products
+    .map(product => {
+      const productReviews = reviews.filter(r => r.product_id === product.id.toString());
+      const reviewCount = productReviews.length;
+      const avg = reviewCount > 0 
+        ? productReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        : 0;
+      return {
+        ...product,
+        rating: avg
+      };
+    })
     // A. Filter by search query (checks name, description, style, or collection)
     .filter(product => {
       const query = searchQuery.toLowerCase();
@@ -503,6 +515,9 @@ function Storefront() {
         const dateB = new Date(b.createdAt || b.id || 0);
         // @ts-ignore
         return dateB - dateA;
+      }
+      if (sortBy === 'rating') {
+        return Number(b.rating || 0) - Number(a.rating || 0);
       }
       return 0;
     });
@@ -855,7 +870,8 @@ function Storefront() {
                   {[
                     { id: 'newest', label: 'Newest' },
                     { id: 'low-high', label: 'Price: Low to High' },
-                    { id: 'high-low', label: 'Price: High to Low' }
+                    { id: 'high-low', label: 'Price: High to Low' },
+                    { id: 'rating', label: 'Sort by Rating' }
                   ].map((option) => {
                     const isActive = sortBy === option.id; 
                     return (
