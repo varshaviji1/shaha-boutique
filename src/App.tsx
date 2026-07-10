@@ -71,6 +71,7 @@ function Storefront() {
 
   // Checkout & Shipping Form states
   const [checkoutStage, setCheckoutStage] = useState<'cart' | 'shipping' | 'payment-submitted'>('cart');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
@@ -336,11 +337,14 @@ function Storefront() {
   };
   const handleProceedToPayment = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSubmitting) return;
     
     if (!customerName || !phoneNumber || !shippingAddress || !pincode) {
       alert("Please fill in all mandatory shipping details.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       // 1. Clear internal IDs from the items list payload
@@ -364,12 +368,17 @@ function Storefront() {
       const { data, error } = await supabase.from('orders').insert(finalizedPayload).select();
       if (error) {
         alert(`Database rejection: ${error.message}`);
+        setIsSubmitting(false);
         return;
       }
 
       // 3. Inject Razorpay script dynamically and trigger the secure checkout modal
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onerror = () => {
+        alert("Failed to load Razorpay SDK. Please check your internet connection.");
+        setIsSubmitting(false);
+      };
       script.onload = () => {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Loaded from environment variables
@@ -389,6 +398,12 @@ function Storefront() {
             setIsCartOpen(false);
             setCheckoutStage('payment-submitted');
             setCart([]);
+            setIsSubmitting(false);
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+            }
           },
           prefill: {
             name: customerName,
@@ -404,6 +419,7 @@ function Storefront() {
     } catch (err: any) {
       console.error("Payment setup crash:", err);
       alert("An error occurred during checkout setup.");
+      setIsSubmitting(false);
     }
   };
 
@@ -1670,10 +1686,11 @@ function Storefront() {
                 ) : (
                   <div className="space-y-3">
                     <button
+                      disabled={isSubmitting}
                       onClick={() => handleProceedToPayment()}
-                      className="w-full bg-[#004225] hover:bg-[#005c34] text-white py-3.5 px-6 rounded-sm uppercase tracking-widest text-xs font-bold transition-colors shadow-md border border-[#D4AF37]/35 flex items-center justify-center space-x-2"
+                      className="w-full bg-[#004225] hover:bg-[#005c34] disabled:bg-stone-500 disabled:cursor-not-allowed text-white py-3.5 px-6 rounded-sm uppercase tracking-widest text-xs font-bold transition-colors shadow-md border border-[#D4AF37]/35 flex items-center justify-center space-x-2"
                     >
-                      <span>Proceed to Secure Payment</span>
+                      <span>{isSubmitting ? 'Processing...' : 'Proceed to Secure Payment'}</span>
                     </button>
                     
 
