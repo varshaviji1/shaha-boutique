@@ -372,7 +372,7 @@ function Storefront() {
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => {
         const options = {
-          key: "rzp_test_TBLYWHLI7ywVgx", // Hardcoded authorized test key
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Loaded from environment variables
           amount: Math.round(orderTotal * 100), // Enforces exact total price in paise (multiplied by 100)
           currency: "INR",
           name: "Shah's Boutique",
