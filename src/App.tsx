@@ -1891,7 +1891,7 @@ function Storefront() {
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput === 'SHAHI2026') {
+    if (pinInput === import.meta.env.VITE_ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       setPinError(null);
     } else {
